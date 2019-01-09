@@ -40,14 +40,14 @@ class cov_net(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(64),
             nn.Dropout2d(p=0.05),
-			
-			#Conv2
+            
+            #Conv2
             nn.Conv2d(64, 128, 3, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(128),
             nn.Dropout2d(p=0.05),
-			
-			#Conv3
+            
+            #Conv3
             nn.Conv2d(128, 128, 3, padding=1), 
             nn.ReLU(),
             nn.BatchNorm2d(128),
@@ -59,8 +59,8 @@ class cov_net(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(256),
             nn.Dropout2d(p=0.05),
-			
-			#Conv5
+            
+            #Conv5
             nn.Conv2d(256, 256, 3, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(256),
@@ -72,8 +72,8 @@ class cov_net(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(512),
             nn.Dropout2d(p=0.05),
-			
-			#Conv7
+            
+            #Conv7
             nn.Conv2d(512, 512, 3, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(512),
@@ -160,10 +160,10 @@ class cov_net(nn.Module):
                 output = layer(output)
                 self.features_outputs[i] = output
         return output
-	
-	"""
-	Forward an input into the net.
-	"""
+    
+    """
+    Forward an input into the net.
+    """
     def forward(self, x):
         output = self.forward_features(x)
         output = output.view(output.size()[0], -1)
@@ -200,7 +200,7 @@ class deconv_net(nn.Module):
                 
         """
         We choose only one feature map to reconstruct the image. So we need 
-		for the first step to pass through a (1 , N) size ConvTranspose2d.
+        for the first step to pass through a (1 , N) size ConvTranspose2d.
         """
         self.deconv_max_filter = nn.ModuleList([inverse_module(i, True) 
             for i in reversed(cnn.features) if inverse_module(i) is not None])
@@ -210,10 +210,10 @@ class deconv_net(nn.Module):
 
         
     def init_indices(self):
-		"""
-		Initialize dictionary of indices associating each deconv layer with the
-		proper conv layer.
-		"""
+        """
+        Initialize dictionary of indices associating each deconv layer with the
+        proper conv layer.
+        """
         idx_conv = 0
         idx_relu = 0
         idx_maxp = 0
@@ -299,13 +299,13 @@ class deconv_net(nn.Module):
         return output
     
 def inverse_module(layer, uni_filter = False):
-	"""
-	Inputs:
-	-------------------------------
-	layer: Layer to be inverse in order to create the deconv net.
-	uni_filter: Boolean input (Default = False). This input is for conv2d 
-	layer, if True it will return ConvTranspose2d layer 
-	"""
+    """
+    Inputs:
+    -------------------------------
+    layer: Layer to be inverse in order to create the deconv net.
+    uni_filter: Boolean input (Default = False). This input is for conv2d 
+    layer, if True it will return ConvTranspose2d layer 
+    """
     if isinstance(layer, nn.ReLU):
         return nn.ReLU()
     if isinstance(layer, nn.MaxPool2d):
@@ -384,6 +384,21 @@ def max_filter(filters):
     return idmax, M 
 
 def eval(cnn, testloader):
+    """
+    Function evaluating the performance of the model (cnn) on the data (
+    testloader).
+
+    Inputs:
+    -------
+    cnn: cov_net instance we want to test the performance.
+    testloader: Pytorch Dataloader containing the testing data.
+
+    Prints:
+    -------
+    Compute the performances on each of the 10 classes and plot the associated
+    confusion matrix.
+    """
+
     correct = 0
     total = 0
     cnn.eval()
@@ -430,7 +445,26 @@ def eval(cnn, testloader):
 
 def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
         weight_decay=0.0001):
-    
+    """
+    Train function for the network.
+
+    Inputs:
+    -------
+    cnn: conv_net instance we want to train.
+    trainloader: pytorch Dataloader instance containing the training data.
+    testloader: pytorch Dataloader instance containing the test data.
+    num_epoch: number of training epoch.
+    lr: Learning rate for the SGD.
+    weight_decay: value of the L2 regularization.
+
+    Returns:
+    -------
+    loss_train: normalized loss on the training data at after each epoch.
+    loss_test: normalized loss on the test data at after each epoch.
+    err_train: total error on the training set after each epoch.
+    err_test: total error on the test set after each epoch.
+    """
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(cnn.parameters(), lr=lr, weight_decay=weight_decay,
         momentum=0.9)
@@ -653,4 +687,3 @@ if __name__ == '__main__':
     
     torch.cuda.empty_cache()
     plt.show()
-
