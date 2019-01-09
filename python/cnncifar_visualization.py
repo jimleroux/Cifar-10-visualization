@@ -289,7 +289,7 @@ class deconv_net(nn.Module):
             :, :, :]
          
         self.deconv_max_filter[start_idx].bias.data = \
-         self.deconv_features[start_idx].bias.data
+        	self.deconv_features[start_idx].bias.data
         
         output = self.deconv_max_filter[start_idx](output)
         for i in range(start_idx + 1, len(self.deconv_features)):
