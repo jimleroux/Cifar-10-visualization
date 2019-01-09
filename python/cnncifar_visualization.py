@@ -168,6 +168,7 @@ class cov_net(nn.Module):
 		return output
 
 class deconv_net(nn.Module):
+<<<<<<< HEAD
 	"""
 	Deconvolutional network.
 	"""
@@ -259,6 +260,98 @@ class deconv_net(nn.Module):
 		x: Feature map to reconstruct.
 		layer: Layer from which we reconstruct the feature map.
 			
+=======
+    """
+    Deconvolutional network.
+    """
+    def __init__(self, cnn):
+        super(deconv_net, self).__init__()
+        self.cnn = cnn
+        """
+        Dictionaries of indices to associate the layers from the CNN to the 
+        deconv net. As an exemple: conv2DeconvIdx[0] means that the 17th layer
+        is 'attached' to the first layer of CNN.
+        """
+        self.conv2DeconvIdx = {}
+        self.relu2DeconvIdx = {}
+        self.maxp2DeconvIdx = {}
+        
+        """
+        Indices needed to initialize weight and for max unpool.
+        """
+        self.biasIdx = {}
+        self.unpool2Idx = {}
+        
+        """
+        Deconvolutional neural network associated with a given cnn.
+        """
+        self.deconv_features = nn.ModuleList([inverse_module(i) 
+            for i in reversed(cnn.layers) if inverse_module(i) is not None])
+                
+        """
+        We choose only one feature map to reconstruct the image. So we need 
+			for the first step to pass through a (1 , N) size ConvTranspose2d.
+        """
+        self.deconv_max_filter = nn.ModuleList([inverse_module(i, True) 
+            for i in reversed(cnn.layers) if inverse_module(i) is not None])
+        
+        self.init_indices()
+        self.initialize_weights()
+
+        
+    def init_indices(self):
+			"""
+			Initialize dictionary of indices associating each deconv layer with the
+			proper conv layer.
+			"""
+        idx_conv = 0
+        idx_relu = 0
+        idx_maxp = 0
+        for i, layer in enumerate(self.deconv_features):
+            if isinstance(layer, nn.ConvTranspose2d):
+                self.conv2DeconvIdx[cnn.conv_indices[-1 - idx_conv]] = i
+                if i <= 1:
+                    self.biasIdx[cnn.conv_indices[-1 - idx_conv]] = 0
+                else:
+                    self.biasIdx[cnn.conv_indices[-1 - idx_conv]] = \
+                        self.conv2DeconvIdx[cnn.conv_indices[-idx_conv]]
+                idx_conv += 1
+            if isinstance(layer, nn.ReLU):
+                self.relu2DeconvIdx[cnn.relu_indices[-1 - idx_relu]] = i
+                idx_relu += 1
+            if isinstance(layer, nn.MaxUnpool2d):
+                self.maxp2DeconvIdx[cnn.maxp_indices[-1 - idx_maxp]] = i
+                self.unpool2Idx[i] = cnn.maxp_indices[-1 - idx_maxp]
+                idx_maxp += 1
+    
+    def initialize_weights(self):
+        """
+        Input:
+        -------------------------------
+        cnn : Pre-trained cnn.
+        
+        -------------------------------
+        Set weights and bias of the deconvulational layer to those of the input
+        cnn.
+        """
+        for i, layer in enumerate(self.cnn.layers):
+            if isinstance(layer, nn.Conv2d):
+                self.deconv_features[self.conv2DeconvIdx[i]].weight.data = \
+                    layer.weight.data
+                biasIdx = self.biasIdx[i]
+                if biasIdx > 0:
+                    self.deconv_features[biasIdx].bias.data = \
+                        layer.bias.data.to(device)
+        self.deconv_features[len(self.deconv_features) - 1].bias.data = \
+            self.deconv_features[len(self.deconv_features) - 1].bias.data.to(device)              
+                
+    def forward(self, x, layer, filt_number, pool_indices):
+        """
+        Inputs:
+			-------------------------------
+			x: Feature map to reconstruct.
+			layer: Layer from which we reconstruct the feature map.
+>>>>>>> Comment_Deconv
 			
 		"""
 		
@@ -275,6 +368,7 @@ class deconv_net(nn.Module):
 			fsize = output.size()[2]
 			output = output[0][idmax].view(1,1,fsize,fsize)           
 			
+<<<<<<< HEAD
 		elif isinstance(self.cnn.features[layer], nn.ReLU):
 			start_idx = self.relu2DeconvIdx[layer]
 			output = self.deconv_max_filter[start_idx](x)
@@ -300,6 +394,48 @@ class deconv_net(nn.Module):
 				output = self.deconv_features[i](output)
 		return output
 	
+=======
+        """
+        
+        #Depending at which state in the cnn we decided to reconstruct the image.
+        #There are 3 possibilities: Conv2d, ReLU, MaxPool. 
+        if isinstance(self.cnn.layers[layer], nn.MaxPool2d):
+            start_idx = self.maxp2DeconvIdx[layer]
+            output = self.deconv_max_filter[start_idx](x, 
+                                    pool_indices[self.unpool2Idx[start_idx]])
+            start_idx += 1
+            output = self.deconv_max_filter[start_idx](output)
+            start_idx += 1
+            idmax, M = max_filter(output)
+            fsize = output.size()[2]
+            output = output[0][idmax].view(1,1,fsize,fsize)           
+            
+        elif isinstance(self.cnn.layers[layer], nn.ReLU):
+            start_idx = self.relu2DeconvIdx[layer]
+            output = self.deconv_max_filter[start_idx](x)
+            start_idx += 1
+            
+        elif isinstance(self.cnn.layers[layer], nn.Conv2d):
+            start_idx = self.conv2DeconvIdx[layer]
+            output = x
+            
+        self.deconv_max_filter[start_idx].weight.data = \
+            self.deconv_features[start_idx].weight[filt_number].data[None, 
+            :, :, :]
+         
+        self.deconv_max_filter[start_idx].bias.data = \
+         self.deconv_features[start_idx].bias.data
+        
+        output = self.deconv_max_filter[start_idx](output)
+        for i in range(start_idx + 1, len(self.deconv_features)):
+            if isinstance(self.deconv_features[i], nn.MaxUnpool2d):
+                output = self.deconv_features[i](output, 
+                                             pool_indices[self.unpool2Idx[i]])
+            else:
+                output = self.deconv_features[i](output)
+        return output
+    
+>>>>>>> Comment_Deconv
 def inverse_module(layer, uni_filter = False):
 	"""
 	Inputs:
@@ -334,6 +470,7 @@ def inverse_module(layer, uni_filter = False):
 	
 	
 def reconstruction(image, cnn, layer):
+<<<<<<< HEAD
 	"""
 	Inputs: 
 	-------------------------------
@@ -372,6 +509,46 @@ def reconstruction(image, cnn, layer):
 		recont_rand = np.transpose(recont_rand, (1,2,0))
 	
 		return recont_max, recont_rand
+=======
+    """
+    Inputs: 
+    -------------------------------
+    image: Images from the data set.
+    cnn: Pre-trained CNN from which we want to visualize learned features.
+    layer: From which layer we want to recontruct to image.    
+    
+    Output:
+    -------------------------------
+    Reconstruction of 2 images: one from a randomly choosen filter at the input
+    layer and from the max filter of the same layer.
+    """
+    deconv = deconv_net(cnn)
+    cnn.eval_features(image.view(1,3,32,32).to(device))
+    feat = cnn.layers_outputs[layer]
+    idmax, M = max_filter(feat)
+    poolIdx = cnn.pool_indices
+    
+    if isinstance(cnn.layers[layer], nn.MaxPool2d):
+        recont_max = deconv.forward(feat, layer, idmax, poolIdx)
+        recont_max = recont_max.detach().to("cpu").numpy()[0]
+        recont_max = np.transpose(recont_max, (1,2,0))
+        
+        return recont_max, recont_max
+    else:
+        fsize = feat.size()[2]
+    
+        recont_max = deconv.forward(feat[0][idmax].view(1,1,fsize,fsize),
+                                    layer, idmax, poolIdx)
+        recont_max = recont_max.detach().to("cpu").numpy()[0]
+        recont_max = np.transpose(recont_max, (1,2,0))
+    
+        recont_rand = deconv.forward(feat[0][0].view(1,1,fsize,fsize),
+                                     layer, 0, poolIdx)
+        recont_rand = recont_rand.detach().to("cpu").numpy()[0]
+        recont_rand = np.transpose(recont_rand, (1,2,0))
+    
+        return recont_max, recont_rand
+>>>>>>> Comment_Deconv
 
 def max_filter(filters):
 	"""
