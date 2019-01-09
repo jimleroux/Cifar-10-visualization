@@ -6,7 +6,7 @@ Conv-Deconvolutional Network.
 
 __authors__ = "Nicolas Laliberte, Jimmy Leroux"
 __version__ = "1.2"
-__maintainer__ = "Nicolas Laliberté"
+__maintainer__ = "Nicolas Laliberté, Jimmy Leroux"
 
 import torch
 import torchvision
