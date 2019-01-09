@@ -161,9 +161,6 @@ class cov_net(nn.Module):
                 self.features_outputs[i] = output
         return output
 	
-	"""
-	Forward an input into the net.
-	"""
     def forward(self, x):
         output = self.forward_features(x)
         output = output.view(output.size()[0], -1)
@@ -200,7 +197,7 @@ class deconv_net(nn.Module):
                 
         """
         We choose only one feature map to reconstruct the image. So we need 
-		for the first step to pass through a (1 , N) size ConvTranspose2d.
+			for the first step to pass through a (1 , N) size ConvTranspose2d.
         """
         self.deconv_max_filter = nn.ModuleList([inverse_module(i, True) 
             for i in reversed(cnn.features) if inverse_module(i) is not None])
@@ -210,10 +207,10 @@ class deconv_net(nn.Module):
 
         
     def init_indices(self):
-		"""
-		Initialize dictionary of indices associating each deconv layer with the
-		proper conv layer.
-		"""
+			"""
+			Initialize dictionary of indices associating each deconv layer with the
+			proper conv layer.
+			"""
         idx_conv = 0
         idx_relu = 0
         idx_maxp = 0
@@ -257,7 +254,12 @@ class deconv_net(nn.Module):
                 
     def forward(self, x, layer, filt_number, pool_indices):
         """
-        Feedforward in the network.
+        Inputs:
+			-------------------------------
+			x: Feature map to reconstruct.
+			layer: Layer from which we reconstruct the feature map.
+			
+			
         """
         
         #Depending at which state in the cnn we decided to reconstruct the image.
@@ -302,9 +304,17 @@ def inverse_module(layer, uni_filter = False):
 	"""
 	Inputs:
 	-------------------------------
-	layer: Layer to be inverse in order to create the deconv net.
+	layer: Layer to be inverse in order to create the deconv net. This function
+	takes only the ReLU, MaxPool2d or ConvTranspose2d module as inputs.
 	uni_filter: Boolean input (Default = False). This input is for conv2d 
-	layer, if True it will return ConvTranspose2d layer 
+	layer, if True it will return ConvTranspose2d layer of size (1, x) in order
+	to reconstruct an image for one specific feature map.
+	
+	Return:
+	-------------------------------
+	If ReLU, MaxPool2d or ConvTranspose2d is given, then it returns ReLU,
+	MaxUnpool2d or ConvTranspose2d respectively. If not, it returns None.
+	
 	"""
     if isinstance(layer, nn.ReLU):
         return nn.ReLU()
@@ -331,7 +341,7 @@ def reconstruction(image, cnn, layer):
     cnn: Pre-trained CNN from which we want to visualize learned features.
     layer: From which layer we want to recontruct to image.    
     
-    Return:
+    Output:
     -------------------------------
     Reconstruction of 2 images: one from a randomly choosen filter at the input
     layer and from the max filter of the same layer.
@@ -369,7 +379,7 @@ def max_filter(filters):
     -------------------------------
     Tensor of size (N, (filters))
     
-    Return:
+    Output:
     -------------------------------
     The max based on means and std from the N filters and the positions of this
     filter.
