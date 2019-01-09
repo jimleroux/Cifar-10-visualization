@@ -34,7 +34,7 @@ class cov_net(nn.Module):
         """
         Network to be read in order.
         """
-        self.features = nn.Sequential(
+        self.layers = nn.Sequential(
             #Conv 1
             nn.Conv2d(3, 64, 3, padding=1),
             nn.ReLU(),
@@ -87,7 +87,7 @@ class cov_net(nn.Module):
             nn.Dropout2d(p=0.05))
 
         #We keep the output of each layer for the deconv net.
-        self.features_outputs = [0]*len(self.features)
+        self.layers_outputs = [0]*len(self.layers)
         #We keep the max pool indices to compute the partial inverse in the
         #deconv net.
         self.pool_indices = {}
@@ -105,7 +105,7 @@ class cov_net(nn.Module):
         self.init_indices()
 
     def init_indices(self):
-        for i, layer in enumerate(self.features):
+        for i, layer in enumerate(self.layers):
             if isinstance(layer, nn.MaxPool2d):
                 self.maxp_indices.append(i)
             elif isinstance(layer, nn.ReLU):
@@ -125,14 +125,14 @@ class cov_net(nn.Module):
         
         """
         output = x
-        for i, layer in enumerate(self.features):
+        for i, layer in enumerate(self.layers):
             if isinstance(layer, nn.MaxPool2d):
                 output, indices = layer(output)
-                self.features_outputs[i] = output
+                self.layers_outputs[i] = output
                 self.pool_indices[i] = indices
             else:
                 output = layer(output)
-                self.features_outputs[i] = output
+                self.layers_outputs[i] = output
         return output
     
     def eval_features(self, x):
@@ -148,17 +148,17 @@ class cov_net(nn.Module):
         deconv net.        
         """
         output = x
-        for i, layer in enumerate(self.features):
+        for i, layer in enumerate(self.layers):
             if isinstance(layer, nn.MaxPool2d):
                 output, indices = layer(output)
-                self.features_outputs[i] = output
+                self.layers_outputs[i] = output
                 self.pool_indices[i] = indices
             elif isinstance(layer, nn.Conv2d):
                 output = layer(output)
-                self.features_outputs[i] = output
+                self.layers_outputs[i] = output
             elif isinstance(layer, nn.ReLU):
                 output = layer(output)
-                self.features_outputs[i] = output
+                self.layers_outputs[i] = output
         return output
 	
     def forward(self, x):
