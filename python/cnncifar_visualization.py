@@ -384,6 +384,21 @@ def max_filter(filters):
     return idmax, M 
 
 def eval(cnn, testloader):
+    """
+    Function evaluating the performance of the model (cnn) on the data (
+    testloader).
+
+    Inputs:
+    -------
+    cnn: cov_net instance we want to test the performance.
+    testloader: Pytorch Dataloader containing the testing data.
+
+    Prints:
+    -------
+    Compute the performances on each of the 10 classes and plot the associated
+    confusion matrix.
+    """
+
     correct = 0
     total = 0
     cnn.eval()
@@ -430,7 +445,25 @@ def eval(cnn, testloader):
 
 def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
         weight_decay=0.0001):
-    
+    """
+    Train function for the network.
+
+    Inputs:
+    -------
+    cnn: conv_net instance we want to train.
+    trainloader: pytorch Dataloader instance containing the training data.
+    testloader: pytorch Dataloader instance containing the test data.
+    num_epoch: number of training epoch.
+    lr: Learning rate for the SGD.
+    weight_decay: value of the L2 regularization.
+
+    Returns:
+    -------
+    loss_train: normalized loss on the training data at after each epoch.
+    loss_test: normalized loss on the test data at after each epoch.
+    err_train: total error on the training set after each epoch.
+    err_test: total error on the test set after each epoch.
+    """    
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(cnn.parameters(), lr=lr, weight_decay=weight_decay,
         momentum=0.9)
