@@ -194,14 +194,14 @@ class deconv_net(nn.Module):
 		Deconvolutional neural network associated with a given cnn.
 		"""
 		self.deconv_features = nn.ModuleList([inverse_module(i) 
-			for i in reversed(cnn.features) if inverse_module(i) is not None])
+			for i in reversed(cnn.layers) if inverse_module(i) is not None])
 				
 		"""
 		We choose only one feature map to reconstruct the image. So we need 
 			for the first step to pass through a (1 , N) size ConvTranspose2d.
 		"""
 		self.deconv_max_filter = nn.ModuleList([inverse_module(i, True) 
-			for i in reversed(cnn.features) if inverse_module(i) is not None])
+			for i in reversed(cnn.layers) if inverse_module(i) is not None])
 		
 		self.init_indices()
 		self.initialize_weights()
@@ -242,7 +242,7 @@ class deconv_net(nn.Module):
 		Set weights and bias of the deconvulational layer to those of the input
 		cnn.
 		"""
-		for i, layer in enumerate(self.cnn.features):
+		for i, layer in enumerate(self.cnn.layers):
 			if isinstance(layer, nn.Conv2d):
 				self.deconv_features[self.conv2DeconvIdx[i]].weight.data = \
 					layer.weight.data
@@ -357,7 +357,7 @@ class deconv_net(nn.Module):
 		
 		#Depending at which state in the cnn we decided to reconstruct the image.
 		#There are 3 possibilities: Conv2d, ReLU, MaxPool. 
-		if isinstance(self.cnn.features[layer], nn.MaxPool2d):
+		if isinstance(self.cnn.layers[layer], nn.MaxPool2d):
 			start_idx = self.maxp2DeconvIdx[layer]
 			output = self.deconv_max_filter[start_idx](x, 
 				pool_indices[self.unpool2Idx[start_idx]])
@@ -369,12 +369,12 @@ class deconv_net(nn.Module):
 			output = output[0][idmax].view(1,1,fsize,fsize)           
 			
 <<<<<<< HEAD
-		elif isinstance(self.cnn.features[layer], nn.ReLU):
+		elif isinstance(self.cnn.layers[layer], nn.ReLU):
 			start_idx = self.relu2DeconvIdx[layer]
 			output = self.deconv_max_filter[start_idx](x)
 			start_idx += 1
 			
-		elif isinstance(self.cnn.features[layer], nn.Conv2d):
+		elif isinstance(self.cnn.layers[layer], nn.Conv2d):
 			start_idx = self.conv2DeconvIdx[layer]
 			output = x
 			
@@ -485,11 +485,11 @@ def reconstruction(image, cnn, layer):
 	"""
 	deconv = deconv_net(cnn)
 	cnn.eval_features(image.view(1,3,32,32).to(device))
-	feat = cnn.features_outputs[layer]
+	feat = cnn.layers_outputs[layer]
 	idmax, M = max_filter(feat)
 	poolIdx = cnn.pool_indices
 	
-	if isinstance(cnn.features[layer], nn.MaxPool2d):
+	if isinstance(cnn.layers[layer], nn.MaxPool2d):
 		recont_max = deconv.forward(feat, layer, idmax, poolIdx)
 		recont_max = recont_max.detach().to("cpu").numpy()[0]
 		recont_max = np.transpose(recont_max, (1,2,0))
