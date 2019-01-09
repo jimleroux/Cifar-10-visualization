@@ -115,11 +115,11 @@ class cov_net(nn.Module):
              
     def forward_features(self, x):
         """
-        Input:
+        Inputs:
         -------------------------------
         x: Images with 3 channels.
         
-        Return: 
+        Returns: 
         -------------------------------
         Output obtained by forwarding the input through the CNN.     
         
@@ -137,11 +137,11 @@ class cov_net(nn.Module):
     
     def eval_features(self, x):
         """
-        Input: 
+        Inputs: 
         -------------------------------
         x: Images with 3 channels.
         
-        Return: 
+        Returns: 
         -------------------------------            
         Output obtained by forwarding the input through the CNN without dropout
         and batch norm. This function is used to extract feature with the 
@@ -207,10 +207,10 @@ class deconv_net(nn.Module):
 
         
     def init_indices(self):
-			"""
-			Initialize dictionary of indices associating each deconv layer with the
-			proper conv layer.
-			"""
+		"""
+		Initialize dictionary of indices associating each deconv layer with the
+		proper conv layer.
+		"""
         idx_conv = 0
         idx_relu = 0
         idx_maxp = 0
@@ -255,9 +255,9 @@ class deconv_net(nn.Module):
     def forward(self, x, layer, filt_number, pool_indices):
         """
         Inputs:
-			-------------------------------
-			x: Feature map to reconstruct.
-			layer: Layer from which we reconstruct the feature map.
+		-------------------------------
+		x: Feature map to reconstruct.
+		layer: Layer from which we reconstruct the feature map.
 			
 			
         """
@@ -310,7 +310,7 @@ def inverse_module(layer, uni_filter = False):
 	layer, if True it will return ConvTranspose2d layer of size (1, x) in order
 	to reconstruct an image for one specific feature map.
 	
-	Return:
+	Returns:
 	-------------------------------
 	If ReLU, MaxPool2d or ConvTranspose2d is given, then it returns ReLU,
 	MaxUnpool2d or ConvTranspose2d respectively. If not, it returns None.
@@ -341,7 +341,7 @@ def reconstruction(image, cnn, layer):
     cnn: Pre-trained CNN from which we want to visualize learned features.
     layer: From which layer we want to recontruct to image.    
     
-    Output:
+    Returns:
     -------------------------------
     Reconstruction of 2 images: one from a randomly choosen filter at the input
     layer and from the max filter of the same layer.
@@ -375,11 +375,11 @@ def reconstruction(image, cnn, layer):
 
 def max_filter(filters):
     """
-    Input:
+    Inputs:
     -------------------------------
     Tensor of size (N, (filters))
     
-    Output:
+    Returns:
     -------------------------------
     The max based on means and std from the N filters and the positions of this
     filter.
@@ -535,7 +535,7 @@ def visualization(i, layer, gray = True):
     layer: From which layer we want to visualize features.
     gray: True if we want to visualize in a 'electrical' view. False if not.
     
-    Output:
+    Outputs:
     -------------------------------
     Recontruction of the image.
     """    
@@ -557,7 +557,7 @@ def show_image(i):
     -------------------------------
     i: Indices in the dataset of images.
     
-    Output:
+    Returns:
     -------------------------------
     Image renormalized and ready to be used in plt.imshow.
     """
@@ -575,7 +575,7 @@ def grid_feature(indices, layers = [0,4,27]):
              visualize learned features from the cnn.
     layers: List of layers from which we want to reconstruct the images.
     
-    Output:
+    Returns:
     -------------------------------
     Show a grid displaying all the features and choosen images.
     """
@@ -615,7 +615,7 @@ def find_label(labels, start = 0):
     labels: List of int representing the classes we are looking for.
     start: Starting indice in the dataset.
     
-    Output:
+    Returns:
     -------------------------------
     List of indices in the dataset.
     """
