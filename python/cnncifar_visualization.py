@@ -6,7 +6,7 @@ Conv-Deconvolutional Network.
 
 __authors__ = "Nicolas Laliberte, Jimmy Leroux"
 __version__ = "1.2"
-__maintainer__ = "Nicolas Laliberté, Jimmy Leroux"
+__maintainer__ = "Nicolas Laliberté"
 
 import torch
 import torchvision
@@ -257,7 +257,7 @@ class deconv_net(nn.Module):
                 
     def forward(self, x, layer, filt_number, pool_indices):
         """
-        Forward function to feedforward in the network.
+        Feedforward in the network.
         """
         
         #Depending at which state in the cnn we decided to reconstruct the image.
@@ -299,6 +299,13 @@ class deconv_net(nn.Module):
         return output
     
 def inverse_module(layer, uni_filter = False):
+	"""
+	Inputs:
+	-------------------------------
+	layer: Layer to be inverse in order to create the deconv net.
+	uni_filter: Boolean input (Default = False). This input is for conv2d 
+	layer, if True it will return ConvTranspose2d layer 
+	"""
     if isinstance(layer, nn.ReLU):
         return nn.ReLU()
     if isinstance(layer, nn.MaxPool2d):
