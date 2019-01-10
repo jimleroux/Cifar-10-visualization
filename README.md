@@ -1,5 +1,5 @@
 # Cifar-10 visualization
-We present here an implementation of a Convolutional Neural Network (CNN) on the Cifar-10 dataset for feature visualization. The code is provided in the python directory.
+We present here an implementation of a Convolutional Neural Network (CNN) on the Cifar-10 dataset for feature visualization. The code is provided in the python directory. You only have to execute the code to print the graphs.
 ## Network architecture
 The network architecture we used is a very basic multilayed CNN, see the figure below.
 
