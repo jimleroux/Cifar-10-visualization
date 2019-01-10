@@ -673,16 +673,16 @@ if __name__ == '__main__':
 		transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 	# Load the training set
 	trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-										download=True, transform=transform_t)
+		download=True, transform=transform_t)
 	# Create a pytorch dataloader. Easy use of minibatches and shuffle.
 	trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
-											  shuffle=True, num_workers=0)
+		shuffle=True, num_workers=0)
 	# Load the test set
 	testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-										download=True, transform=transform_t)
+		download=True, transform=transform_t)
 	# Create a pytorch dataloader. Easy use of minibatches and shuffle.
 	testloader = torch.utils.data.DataLoader(testset, batch_size=64,
-											 shuffle=False, num_workers=0)    
+		shuffle=False, num_workers=0)    
 	# The classes in the dataset. For printing purpose.
 	classes = ('plane', 'car', 'bird', 'cat',
 		   'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
