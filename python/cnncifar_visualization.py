@@ -682,14 +682,17 @@ if __name__ == '__main__':
 	cnn = ConvNet().to(device)
 	
 	t1 = time.time()
-	num_epoch = 1
+	num_epoch = 50
+	# Training phase
 	loss_train, loss_test, e_train, e_test = train(cnn, trainloader,
 		testloader, num_epoch) 
 	print(time.time()-t1)
 	
+	# Reload the data but without the horizontal and vertical flip. For printing
+	# purpose
 	trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
 								download=True, transform=transform)
-
+	# Evaluate the model
 	eval(cnn, testloader)   
 	
 	plt.figure()
@@ -709,6 +712,7 @@ if __name__ == '__main__':
 	labels = find_label([3, 5, 7, 9])
 	grid_feature(labels)
 	
+	# Empty the gpu memory
 	torch.cuda.empty_cache()
 	plt.show()
 
