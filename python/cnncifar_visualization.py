@@ -246,8 +246,8 @@ class DeconvNet(nn.Module):
 		Set weights and bias of the deconvulational layer to those of the input
 		cnn.
 		"""
-		
-		for i, layer in enumerate(self.cnn.features):
+
+		for i, layer in enumerate(self.cnn.layers):
 			if isinstance(layer, nn.Conv2d):
 				self.deconv_features[self.conv2DeconvIdx[i]].weight.data = \
 					layer.weight.data
