@@ -6,7 +6,7 @@ Conv-Deconvolutional Network.
 
 __authors__ = "Nicolas Laliberte, Jimmy Leroux"
 __version__ = "1.2"
-__maintainer__ = "Nicolas Laliberté"
+__maintainer__ = "Nicolas Laliberté, Jimmy Leroux"
 
 import torch
 import torchvision
@@ -17,12 +17,12 @@ import torch.nn as nn
 import torch.optim as optim
 import time
 
-class cov_net(nn.Module):
+class ConvNet(nn.Module):
 	"""
 	Convolutional network
 	"""
 	def __init__(self):
-		super(cov_net, self).__init__()
+		super(ConvNet, self).__init__()
 		"""
 		Indices representing the position in the network for conv, relu and
 		max pool layers.
@@ -105,6 +105,11 @@ class cov_net(nn.Module):
 		self.init_indices()
 
 	def init_indices(self):
+		"""
+		Find the indices or the Maxpooling layers, ReLU layers and Conv layers
+		in the network.
+		"""
+
 		for i, layer in enumerate(self.layers):
 			if isinstance(layer, nn.MaxPool2d):
 				self.maxp_indices.append(i)
@@ -116,11 +121,11 @@ class cov_net(nn.Module):
 	def forward_features(self, x):
 		"""
 		Inputs:
-		-------------------------------
+		-------
 		x: Images with 3 channels.
 		
 		Returns: 
-		-------------------------------
+		-------
 		Output obtained by forwarding the input through the CNN.     
 		
 		"""
@@ -138,11 +143,11 @@ class cov_net(nn.Module):
 	def eval_features(self, x):
 		"""
 		Inputs: 
-		-------------------------------
+		-------
 		x: Images with 3 channels.
 		
 		Returns: 
-		-------------------------------            
+		--------           
 		Output obtained by forwarding the input through the CNN without dropout
 		and batch norm. This function is used to extract feature with the 
 		deconv net.        
@@ -162,17 +167,21 @@ class cov_net(nn.Module):
 		return output
 	
 	def forward(self, x):
+		"""
+		Forward pass of x in the network.
+		"""
+
 		output = self.forward_features(x)
 		output = output.view(output.size()[0], -1)
 		output = self.classifier(output)
 		return output
 
-class deconv_net(nn.Module):
+class DeconvNet(nn.Module):
 	"""
 	Deconvolutional network.
 	"""
 	def __init__(self, cnn):
-		super(deconv_net, self).__init__()
+		super(DeconvNet, self).__init__()
 		self.cnn = cnn
 		"""
 		Dictionaries of indices to associate the layers from the CNN to the 
@@ -211,6 +220,7 @@ class deconv_net(nn.Module):
 		Initialize dictionary of indices associating each deconv layer with the
 		proper conv layer.
 		"""
+
 		idx_conv = 0
 		idx_relu = 0
 		idx_maxp = 0
@@ -232,15 +242,11 @@ class deconv_net(nn.Module):
 				idx_maxp += 1
 	
 	def initialize_weights(self):
-		"""
-		Input:
-		-------------------------------
-		cnn : Pre-trained cnn.
-		
-		-------------------------------
+		"""		
 		Set weights and bias of the deconvulational layer to those of the input
 		cnn.
 		"""
+
 		for i, layer in enumerate(self.cnn.features):
 			if isinstance(layer, nn.Conv2d):
 				self.deconv_features[self.conv2DeconvIdx[i]].weight.data = \
@@ -255,11 +261,13 @@ class deconv_net(nn.Module):
 	def forward(self, x, layer, filt_number, pool_indices):
 		"""
 		Inputs:
-		-------------------------------
+		-------
 		x: Feature map to reconstruct.
 		layer: Layer from which we reconstruct the feature map.
-			
-			
+		
+		Returns:
+		--------
+		output: the value of x at the exit of the network.
 		"""
 		
 		#Depending at which state in the cnn we decided to reconstruct the image.
@@ -303,7 +311,7 @@ class deconv_net(nn.Module):
 def inverse_module(layer, uni_filter = False):
 	"""
 	Inputs:
-	-------------------------------
+	-------
 	layer: Layer to be inverse in order to create the deconv net. This function
 	takes only the ReLU, MaxPool2d or ConvTranspose2d module as inputs.
 	uni_filter: Boolean input (Default = False). This input is for conv2d 
@@ -311,11 +319,11 @@ def inverse_module(layer, uni_filter = False):
 	to reconstruct an image for one specific feature map.
 	
 	Returns:
-	-------------------------------
+	--------
 	If ReLU, MaxPool2d or ConvTranspose2d is given, then it returns ReLU,
 	MaxUnpool2d or ConvTranspose2d respectively. If not, it returns None.
-	
 	"""
+
 	if isinstance(layer, nn.ReLU):
 		return nn.ReLU()
 	if isinstance(layer, nn.MaxPool2d):
@@ -336,17 +344,17 @@ def inverse_module(layer, uni_filter = False):
 def reconstruction(image, cnn, layer):
 	"""
 	Inputs: 
-	-------------------------------
+	-------
 	image: Images from the data set.
-	cnn: Pre-trained CNN from which we want to visualize learned features.
 	layer: From which layer we want to recontruct to image.    
 	
 	Returns:
-	-------------------------------
+	--------
 	Reconstruction of 2 images: one from a randomly choosen filter at the input
 	layer and from the max filter of the same layer.
 	"""
-	deconv = deconv_net(cnn)
+
+	deconv = DeconvNet(cnn)
 	cnn.eval_features(image.view(1,3,32,32).to(device))
 	feat = cnn.features_outputs[layer]
 	idmax, M = max_filter(feat)
@@ -376,14 +384,15 @@ def reconstruction(image, cnn, layer):
 def max_filter(filters):
 	"""
 	Inputs:
-	-------------------------------
+	-------
 	Tensor of size (N, (filters))
 	
 	Returns:
-	-------------------------------
+	--------
 	The max based on means and std from the N filters and the positions of this
 	filter.
 	"""
+
 	idmax = 0
 	M = 0.
 	for i in range(len(filters)):
@@ -400,7 +409,7 @@ def eval(cnn, testloader):
 
 	Inputs:
 	-------
-	cnn: cov_net instance we want to test the performance.
+	cnn: ConvNet instance we want to test the performance.
 	testloader: Pytorch Dataloader containing the testing data.
 
 	Prints:
@@ -473,7 +482,8 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 	loss_test: normalized loss on the test data at after each epoch.
 	err_train: total error on the training set after each epoch.
 	err_test: total error on the test set after each epoch.
-	"""    
+	"""
+
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(cnn.parameters(), lr=lr, weight_decay=weight_decay,
 		momentum=0.9)
@@ -530,15 +540,16 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 def visualization(i, layer, gray = True):
 	"""
 	Inputs:
-	-------------------------------
+	-------
 	i: Indices in the dataset of images.
 	layer: From which layer we want to visualize features.
 	gray: True if we want to visualize in a 'electrical' view. False if not.
 	
 	Outputs:
-	-------------------------------
+	--------
 	Recontruction of the image.
-	"""    
+	"""
+
 	recont_max, recont_rand = reconstruction(trainset[i][0], cnn, layer)
 	
 	if gray:
@@ -554,13 +565,14 @@ def visualization(i, layer, gray = True):
 def show_image(i):
 	"""
 	Inputs:
-	-------------------------------
+	-------
 	i: Indices in the dataset of images.
 	
 	Returns:
-	-------------------------------
+	--------
 	Image renormalized and ready to be used in plt.imshow.
 	"""
+
 	im_init = trainset[i][0].detach().to("cpu").numpy()
 	im_init = np.transpose(im_init, (1,2,0))
 	im_init = im_init/2 + 0.5
@@ -570,15 +582,16 @@ def show_image(i):
 def grid_feature(indices, layers = [0,4,27]):
 	"""
 	Inputs:
-	-------------------------------
+	-------
 	indices: List of indices in the dataset of images from which we want to
 			 visualize learned features from the cnn.
 	layers: List of layers from which we want to reconstruct the images.
 	
 	Returns:
-	-------------------------------
+	--------
 	Show a grid displaying all the features and choosen images.
 	"""
+
 	xn = len(indices)
 	yn = len(layers) + 1
 	f, grid_im = plt.subplots(xn, yn, sharex = True)
@@ -611,14 +624,15 @@ def find_label(labels, start = 0):
 	in the dataset that represents the class in the labels inputs.
 	
 	Inputs:
-	-------------------------------
+	-------
 	labels: List of int representing the classes we are looking for.
 	start: Starting indice in the dataset.
 	
 	Returns:
-	-------------------------------
+	--------
 	List of indices in the dataset.
 	"""
+
 	indices = []
 	for i in range(start, len(trainset)):
 		if len(labels) == 0:
@@ -631,40 +645,41 @@ def find_label(labels, start = 0):
 	return indices               
 
 if __name__ == '__main__':
+	# Set the device we want to run the code on. Uses cuda if available.
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	torch.cuda.manual_seed(10)
+	# Plotting style
 	plt.style.use('ggplot')     
 	plt.rc('xtick', labelsize=15)
 	plt.rc('ytick', labelsize=15)
 	plt.rc('axes', labelsize=15)
 
+	# Define the set of transformation to do on the datas. For the visualization
+	# we only normalize the images
 	transform = transforms.Compose([transforms.ToTensor(),
 		transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])      
-
+	# The transformations for the training
 	transform_t = transforms.Compose(
 		[transforms.RandomHorizontalFlip(),
-		transforms.RandomVerticalFlip(),transforms.RandomApply(
-		[transforms.RandomRotation(10)],0.0),transforms.ToTensor(),
+		transforms.RandomVerticalFlip(),transforms.ToTensor(),
 		transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-   
-	
+	# Load the training set
 	trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
 										download=True, transform=transform_t)
-	
+	# Create a pytorch dataloader. Easy use of minibatches and shuffle.
 	trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
 											  shuffle=True, num_workers=0)
-
+	# Load the test set
 	testset = torchvision.datasets.CIFAR10(root='./data', train=False,
 										download=True, transform=transform_t)
-	
+	# Create a pytorch dataloader. Easy use of minibatches and shuffle.
 	testloader = torch.utils.data.DataLoader(testset, batch_size=64,
 											 shuffle=False, num_workers=0)    
-
+	# The classes in the dataset. For printing purpose.
 	classes = ('plane', 'car', 'bird', 'cat',
 		   'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-	cnn = cov_net().to(device)
+	cnn = ConvNet().to(device)
 	
 	t1 = time.time()
 	num_epoch = 1
