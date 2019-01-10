@@ -494,10 +494,6 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 	err_test = []
 	for epoch in range(num_epoch):
 
-		correct = 0.
-		total = 0.
-		running_loss_train = 0.0
-		running_loss_test = 0.0
 		cnn.train()
 		for i, data in enumerate(trainloader, 0):
 			inputs, labels = data
@@ -506,10 +502,21 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 			loss = criterion(outputs, labels.to(device))
 			loss.backward()
 			optimizer.step()
-			running_loss_train += loss.item()
-			_, predicted = torch.max(outputs.data, 1)
-			total += labels.size(0)
-			correct += (predicted == labels.to(device)).sum().item()
+
+		running_loss_train = 0.0
+		running_loss_test = 0.0
+		correct = 0.
+		total = 0.
+		cnn.eval()
+		with torch.no_grad():
+			for data in trainloader:
+				images, labels = data
+				outputs = cnn(images.to(device))
+				_, predicted = torch.max(outputs.data, 1)
+				total += labels.size(0)
+				correct += (predicted == labels.to(device)).sum().item()
+				loss = criterion(outputs, labels.to(device))
+				running_loss_train += loss.item()/50000
 		err_train.append(1 - correct / total)
 		
 		correct = 0.
@@ -523,7 +530,7 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 				total += labels.size(0)
 				correct += (predicted == labels.to(device)).sum().item()
 				loss = criterion(outputs, labels.to(device))
-				running_loss_test += loss.item()
+				running_loss_test += loss.item()/10000
 		err_test.append(1 - correct / total)
 		
 		loss_train.append(running_loss_train)
@@ -535,6 +542,7 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 		   loss_test[epoch], err_test[epoch]))
 
 	print('Finished Training')
+
 	return loss_train, loss_test, err_train, err_test
 
 def visualization(i, layer, gray = True):
@@ -682,7 +690,7 @@ if __name__ == '__main__':
 	cnn = ConvNet().to(device)
 	
 	t1 = time.time()
-	num_epoch = 50
+	num_epoch = 5
 	# Training phase
 	loss_train, loss_test, e_train, e_test = train(cnn, trainloader,
 		testloader, num_epoch) 
