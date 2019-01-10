@@ -690,7 +690,7 @@ if __name__ == '__main__':
 	cnn = ConvNet().to(device)
 	
 	t1 = time.time()
-	num_epoch = 5
+	num_epoch = 50
 	# Training phase
 	loss_train, loss_test, e_train, e_test = train(cnn, trainloader,
 		testloader, num_epoch) 
