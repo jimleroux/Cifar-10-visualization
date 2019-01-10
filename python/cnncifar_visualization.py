@@ -493,7 +493,6 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 	err_train = []
 	err_test = []
 	for epoch in range(num_epoch):
-
 		cnn.train()
 		for i, data in enumerate(trainloader, 0):
 			inputs, labels = data
