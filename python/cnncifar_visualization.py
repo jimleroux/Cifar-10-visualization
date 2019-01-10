@@ -699,7 +699,7 @@ if __name__ == '__main__':
 	# Reload the data but without the horizontal and vertical flip. For printing
 	# purpose
 	trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-								download=True, transform=transform)
+		download=True, transform=transform)
 	# Evaluate the model
 	eval(cnn, testloader)   
 	
