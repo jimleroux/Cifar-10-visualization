@@ -226,19 +226,19 @@ class DeconvNet(nn.Module):
 		idx_maxp = 0
 		for i, layer in enumerate(self.deconv_features):
 			if isinstance(layer, nn.ConvTranspose2d):
-				self.conv2DeconvIdx[cnn.conv_indices[-1 - idx_conv]] = i
+				self.conv2DeconvIdx[cnn.conv_indices[-1-idx_conv]] = i
 				if i <= 1:
-					self.biasIdx[cnn.conv_indices[-1 - idx_conv]] = 0
+					self.biasIdx[cnn.conv_indices[-1-idx_conv]] = 0
 				else:
-					self.biasIdx[cnn.conv_indices[-1 - idx_conv]] = \
+					self.biasIdx[cnn.conv_indices[-1-idx_conv]] = \
 						self.conv2DeconvIdx[cnn.conv_indices[-idx_conv]]
 				idx_conv += 1
 			if isinstance(layer, nn.ReLU):
-				self.relu2DeconvIdx[cnn.relu_indices[-1 - idx_relu]] = i
+				self.relu2DeconvIdx[cnn.relu_indices[-1-idx_relu]] = i
 				idx_relu += 1
 			if isinstance(layer, nn.MaxUnpool2d):
-				self.maxp2DeconvIdx[cnn.maxp_indices[-1 - idx_maxp]] = i
-				self.unpool2Idx[i] = cnn.maxp_indices[-1 - idx_maxp]
+				self.maxp2DeconvIdx[cnn.maxp_indices[-1-idx_maxp]] = i
+				self.unpool2Idx[i] = cnn.maxp_indices[-1-idx_maxp]
 				idx_maxp += 1
 	
 	def initialize_weights(self):
@@ -255,8 +255,8 @@ class DeconvNet(nn.Module):
 				if biasIdx > 0:
 					self.deconv_features[biasIdx].bias.data = \
 						layer.bias.data.to(device)
-		self.deconv_features[len(self.deconv_features) - 1].bias.data = \
-			self.deconv_features[len(self.deconv_features) - 1].bias.data.to(device)              
+		self.deconv_features[len(self.deconv_features)-1].bias.data = \
+			self.deconv_features[len(self.deconv_features)-1].bias.data.to(device)              
 				
 	def forward(self, x, layer, filt_number, pool_indices):
 		"""
@@ -281,7 +281,7 @@ class DeconvNet(nn.Module):
 			start_idx += 1
 			idmax, M = max_filter(output)
 			fsize = output.size()[2]
-			output = output[0][idmax].view(1,1,fsize,fsize)           
+			output = output[0][idmax].view(1, 1, fsize, fsize)           
 			
 		elif isinstance(self.cnn.layers[layer], nn.ReLU):
 			start_idx = self.relu2DeconvIdx[layer]
@@ -308,7 +308,7 @@ class DeconvNet(nn.Module):
 				output = self.deconv_features[i](output)
 		return output
 	
-def inverse_module(layer, uni_filter = False):
+def inverse_module(layer, uni_filter=False):
 	"""
 	Inputs:
 	-------
@@ -327,7 +327,7 @@ def inverse_module(layer, uni_filter = False):
 	if isinstance(layer, nn.ReLU):
 		return nn.ReLU()
 	if isinstance(layer, nn.MaxPool2d):
-		return nn.MaxUnpool2d(2, stride = 2)
+		return nn.MaxUnpool2d(2, stride=2)
 	if isinstance(layer, nn.Conv2d):
 		input_size = layer.state_dict()['weight'].size()[1]
 		output_size = layer.state_dict()['weight'].size()[0]
@@ -336,7 +336,7 @@ def inverse_module(layer, uni_filter = False):
 			return nn.ConvTranspose2d(output_size, input_size, kernel_size, 
 				padding = 1)
 		if uni_filter:
-			return nn.ConvTranspose2d(1, input_size, kernel_size, padding = 1)
+			return nn.ConvTranspose2d(1, input_size, kernel_size, padding=1)
 	else:
 		return None
 	
@@ -355,7 +355,7 @@ def reconstruction(image, cnn, layer):
 	"""
 
 	deconv = DeconvNet(cnn)
-	cnn.eval_features(image.view(1,3,32,32).to(device))
+	cnn.eval_features(image.view(1, 3, 32, 32).to(device))
 	feat = cnn.layers_outputs[layer]
 	idmax, M = max_filter(feat)
 	poolIdx = cnn.pool_indices
@@ -363,21 +363,21 @@ def reconstruction(image, cnn, layer):
 	if isinstance(cnn.layers[layer], nn.MaxPool2d):
 		recont_max = deconv.forward(feat, layer, idmax, poolIdx)
 		recont_max = recont_max.detach().to("cpu").numpy()[0]
-		recont_max = np.transpose(recont_max, (1,2,0))
+		recont_max = np.transpose(recont_max, (1, 2, 0))
 		
 		return recont_max, recont_max
 	else:
 		fsize = feat.size()[2]
 	
-		recont_max = deconv.forward(feat[0][idmax].view(1,1,fsize,fsize),
+		recont_max = deconv.forward(feat[0][idmax].view(1, 1, fsize, fsize),
 									layer, idmax, poolIdx)
 		recont_max = recont_max.detach().to("cpu").numpy()[0]
-		recont_max = np.transpose(recont_max, (1,2,0))
+		recont_max = np.transpose(recont_max, (1, 2, 0))
 	
-		recont_rand = deconv.forward(feat[0][0].view(1,1,fsize,fsize),
+		recont_rand = deconv.forward(feat[0][0].view(1, 1, fsize, fsize),
 									layer, 0, poolIdx)
 		recont_rand = recont_rand.detach().to("cpu").numpy()[0]
-		recont_rand = np.transpose(recont_rand, (1,2,0))
+		recont_rand = np.transpose(recont_rand, (1, 2, 0))
 	
 		return recont_max, recont_rand
 
@@ -544,7 +544,7 @@ def train(cnn, trainloader, testloader, num_epoch=20, lr=0.01,
 
 	return loss_train, loss_test, err_train, err_test
 
-def visualization(i, layer, gray = True):
+def visualization(i, layer, gray=True):
 	"""
 	Inputs:
 	-------
@@ -560,7 +560,7 @@ def visualization(i, layer, gray = True):
 	recont_max, recont_rand = reconstruction(trainset[i][0], cnn, layer)
 	
 	if gray:
-		gray_feat = np.sum(recont_max, axis = 2)/3
+		gray_feat = np.sum(recont_max, axis=2)/3
 		return gray_feat
 
 	else:
@@ -581,12 +581,12 @@ def show_image(i):
 	"""
 
 	im_init = trainset[i][0].detach().to("cpu").numpy()
-	im_init = np.transpose(im_init, (1,2,0))
+	im_init = np.transpose(im_init, (1, 2, 0))
 	im_init = im_init/2 + 0.5
 	
 	return im_init
 			
-def grid_feature(indices, layers = [0,4,27]):
+def grid_feature(indices, layers=[0, 4, 27]):
 	"""
 	Inputs:
 	-------
@@ -601,8 +601,8 @@ def grid_feature(indices, layers = [0,4,27]):
 
 	xn = len(indices)
 	yn = len(layers) + 1
-	f, grid_im = plt.subplots(xn, yn, sharex = True)
-	f.subplots_adjust(left = 0.3, right = 0.8, hspace = 0.1, wspace = 0.1)
+	f, grid_im = plt.subplots(xn, yn, sharex=True)
+	f.subplots_adjust(left=0.3, right=0.8, hspace=0.1, wspace=0.1)
 	x = 0
 	for i in indices:
 		y = 0
@@ -619,13 +619,13 @@ def grid_feature(indices, layers = [0,4,27]):
 		x += 1
 	
 	
-	grid_im[0,0].set_title("First layer", fontsize = 9)
-	grid_im[0,1].set_title("Second layer", fontsize = 9)
-	grid_im[0,2].set_title("Last layer", fontsize = 9)
-	grid_im[0,3].set_title("Images", fontsize = 9)
+	grid_im[0,0].set_title("First layer", fontsize=9)
+	grid_im[0,1].set_title("Second layer", fontsize=9)
+	grid_im[0,2].set_title("Last layer", fontsize=9)
+	grid_im[0,3].set_title("Images", fontsize=9)
 	plt.show()
 
-def find_label(labels, start = 0):
+def find_label(labels, start=0):
 	"""
 	Function that finds the first indice encountered from the starting point
 	in the dataset that represents the class in the labels inputs.
