@@ -608,7 +608,7 @@ def grid_feature(indices, layers=[0, 4, 27]):
 		y = 0
 		for l in layers:
 			vis = visualization(i, l)
-			grid_im[x, y].imshow(vis, cmap = 'bone')
+			grid_im[x, y].imshow(vis, cmap='bone')
 			grid_im[x, y].get_xaxis().set_visible(False)
 			grid_im[x, y].get_yaxis().set_visible(False)            
 			y += 1
